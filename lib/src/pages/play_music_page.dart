@@ -1,6 +1,15 @@
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
+
+//Paquetes
+import 'package:animate_do/animate_do.dart';
+
+
+//Rutas
 import 'package:play_music/src/helpers/helpers.dart';
+import 'package:play_music/src/models/audioplayer_model.dart';
 import 'package:play_music/src/widgets/custom_appbar.dart';
+import 'package:provider/provider.dart';
 
 class PlayMusicPage extends StatelessWidget {
   @override
@@ -72,9 +81,10 @@ class TextoBoton extends StatefulWidget {
 class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateMixin {
 
   bool isPlaying = false;
-
+  bool firstTime = true;
   AnimationController playAnimation;
 
+  final assetAudioPlayer = new AssetsAudioPlayer();
 
   @override
   void initState() {
@@ -86,6 +96,25 @@ class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateM
   void dispose() {
     playAnimation.dispose();
     super.dispose();
+  }
+
+  void open() {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+
+
+    assetAudioPlayer.open(Audio('assets/Breaking-Benjamin-Far-Away.mp3'));
+
+    assetAudioPlayer.currentPosition.listen((duration) { 
+      audioPlayerModel.current = duration;
+    });
+    
+    assetAudioPlayer.current.listen((playingAudio) {
+      audioPlayerModel.songDuration = playingAudio.audio.duration;
+    });
+
+    
+
+
   }
 
   @override
@@ -114,13 +143,31 @@ class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateM
               
             ),
             onPressed: (){
+              
+              final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+              
               if(this.isPlaying){
+
                 playAnimation.reverse();
                 this.isPlaying = false;
+                audioPlayerModel.controller.stop();
+
               }else{
+
                 playAnimation.forward();
                 this.isPlaying = true;
+                audioPlayerModel.controller.repeat();
+                
               }
+
+              if (firstTime ){
+                this.open();
+                firstTime = false;
+              }else{
+
+                assetAudioPlayer.playOrPause();
+              }
+
             })
         ],
       ),
@@ -137,7 +184,7 @@ class ImagenDiscoDuarcion extends StatelessWidget {
       child: Row(
         children: <Widget>[
           ImagenDisco(),
-          SizedBox(width: 40,),
+          SizedBox(width: 20 ,),
 
           BarraProgreso(),
           SizedBox(width: 20,),
@@ -152,10 +199,12 @@ class BarraProgreso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estiloTexto = TextStyle( color: Colors.white.withOpacity(0.4));
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
+    final porcentaje  = audioPlayerModel.porcentaje;
     return Container(
       child: Column(
         children: <Widget>[
-          Text('00.00', style: estiloTexto ,),
+          Text('${audioPlayerModel.songTotalDuration}', style: estiloTexto ,),
           SizedBox(height: 10,),
           Stack(
             children: <Widget>[
@@ -169,7 +218,7 @@ class BarraProgreso extends StatelessWidget {
                 bottom: 0,
                 child: Container(
                   width: 3,
-                  height: 100,
+                  height: 230 * porcentaje,
                   color: Colors.white.withOpacity(0.8),
                 ),
               ),
@@ -177,7 +226,7 @@ class BarraProgreso extends StatelessWidget {
             ],
           ),
           SizedBox(height: 10,),
-          Text('00.00', style: estiloTexto ,)
+          Text('${audioPlayerModel.currentSecond}', style: estiloTexto ,)
         ],
       ),
     );
@@ -187,6 +236,7 @@ class BarraProgreso extends StatelessWidget {
 class ImagenDisco extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
     return Container(
       padding: EdgeInsets.all(20),
       width: 250,
@@ -196,7 +246,17 @@ class ImagenDisco extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: <Widget>[
-            Image( image: AssetImage('assets/aurora.jpg')),
+
+            SpinPerfect(
+              animate: false,
+              duration: Duration(seconds:10),
+              infinite: true,
+              manualTrigger: true,
+              controller: ( animationController ) => audioPlayerModel.controller = animationController ,
+              child: Image( 
+                  image: AssetImage('assets/aurora.jpg')
+              ),
+            ),
             Container(
               height: 25,
               width: 25,
