@@ -1,7 +1,9 @@
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
 
 //Paquetes
 import 'package:animate_do/animate_do.dart';
+
 
 //Rutas
 import 'package:play_music/src/helpers/helpers.dart';
@@ -79,9 +81,10 @@ class TextoBoton extends StatefulWidget {
 class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateMixin {
 
   bool isPlaying = false;
-
+  bool firstTime = true;
   AnimationController playAnimation;
 
+  final assetAudioPlayer = new AssetsAudioPlayer();
 
   @override
   void initState() {
@@ -93,6 +96,25 @@ class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateM
   void dispose() {
     playAnimation.dispose();
     super.dispose();
+  }
+
+  void open() {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+
+
+    assetAudioPlayer.open(Audio('assets/Breaking-Benjamin-Far-Away.mp3'));
+
+    assetAudioPlayer.currentPosition.listen((duration) { 
+      audioPlayerModel.current = duration;
+    });
+    
+    assetAudioPlayer.current.listen((playingAudio) {
+      audioPlayerModel.songDuration = playingAudio.audio.duration;
+    });
+
+    
+
+
   }
 
   @override
@@ -137,6 +159,15 @@ class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateM
                 audioPlayerModel.controller.repeat();
                 
               }
+
+              if (firstTime ){
+                this.open();
+                firstTime = false;
+              }else{
+
+                assetAudioPlayer.playOrPause();
+              }
+
             })
         ],
       ),
@@ -153,7 +184,7 @@ class ImagenDiscoDuarcion extends StatelessWidget {
       child: Row(
         children: <Widget>[
           ImagenDisco(),
-          SizedBox(width: 40,),
+          SizedBox(width: 20 ,),
 
           BarraProgreso(),
           SizedBox(width: 20,),
@@ -168,10 +199,12 @@ class BarraProgreso extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estiloTexto = TextStyle( color: Colors.white.withOpacity(0.4));
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
+    final porcentaje  = audioPlayerModel.porcentaje;
     return Container(
       child: Column(
         children: <Widget>[
-          Text('00.00', style: estiloTexto ,),
+          Text('${audioPlayerModel.songTotalDuration}', style: estiloTexto ,),
           SizedBox(height: 10,),
           Stack(
             children: <Widget>[
@@ -185,7 +218,7 @@ class BarraProgreso extends StatelessWidget {
                 bottom: 0,
                 child: Container(
                   width: 3,
-                  height: 100,
+                  height: 230 * porcentaje,
                   color: Colors.white.withOpacity(0.8),
                 ),
               ),
@@ -193,7 +226,7 @@ class BarraProgreso extends StatelessWidget {
             ],
           ),
           SizedBox(height: 10,),
-          Text('00.00', style: estiloTexto ,)
+          Text('${audioPlayerModel.currentSecond}', style: estiloTexto ,)
         ],
       ),
     );
