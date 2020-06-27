@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+
+//Paquetes
+import 'package:animate_do/animate_do.dart';
+
+//Rutas
 import 'package:play_music/src/helpers/helpers.dart';
+import 'package:play_music/src/models/audioplayer_model.dart';
 import 'package:play_music/src/widgets/custom_appbar.dart';
+import 'package:provider/provider.dart';
 
 class PlayMusicPage extends StatelessWidget {
   @override
@@ -114,12 +121,21 @@ class _TextoBotonState extends State<TextoBoton> with SingleTickerProviderStateM
               
             ),
             onPressed: (){
+              
+              final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+              
               if(this.isPlaying){
+
                 playAnimation.reverse();
                 this.isPlaying = false;
+                audioPlayerModel.controller.stop();
+
               }else{
+
                 playAnimation.forward();
                 this.isPlaying = true;
+                audioPlayerModel.controller.repeat();
+                
               }
             })
         ],
@@ -187,6 +203,7 @@ class BarraProgreso extends StatelessWidget {
 class ImagenDisco extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
     return Container(
       padding: EdgeInsets.all(20),
       width: 250,
@@ -196,7 +213,17 @@ class ImagenDisco extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: <Widget>[
-            Image( image: AssetImage('assets/aurora.jpg')),
+
+            SpinPerfect(
+              animate: false,
+              duration: Duration(seconds:10),
+              infinite: true,
+              manualTrigger: true,
+              controller: ( animationController ) => audioPlayerModel.controller = animationController ,
+              child: Image( 
+                  image: AssetImage('assets/aurora.jpg')
+              ),
+            ),
             Container(
               height: 25,
               width: 25,
